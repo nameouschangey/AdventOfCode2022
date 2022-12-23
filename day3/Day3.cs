@@ -15,19 +15,9 @@ namespace AdventOfCode.Day3
             Right = rucksackContents.Substring(rucksackContents.Length / 2);
         }
 
-        public IEnumerable<char> FindCommonItemInCompartements()
+        public IEnumerable<char> FindCommonItems()
         {
-            var inLeft = Left.ToHashSet();
-
-            var shared = new HashSet<char>();
-            foreach(var c in Right)
-            {
-                if (inLeft.Contains(c))
-                {
-                    shared.Add(c);
-                }
-            }
-            return shared;
+            return Left.Intersect(Right);
         }
     }
 
@@ -43,11 +33,10 @@ namespace AdventOfCode.Day3
         public char FindCommonItem()
         { // defined in the problem, there will only be 1 item common to ALL three of them
 
-            var candidates = Rucksacks.First().All.ToHashSet();
+            var candidates = Rucksacks.First().All;
             foreach (var rucksack in Rucksacks)
             {
-                candidates = rucksack.All.Where(x => candidates.Contains(x))
-                                         .ToHashSet();
+                candidates = rucksack.All.Intersect(candidates);
             }
             return candidates.First();
         }
@@ -55,13 +44,13 @@ namespace AdventOfCode.Day3
 
     public class Scoring
     {
-        public static int ScorePriority(IEnumerable<char> misplacedItems)
+        public static int ScoreMultipleItems(IEnumerable<char> misplacedItems)
         {
-            return misplacedItems.Select(x => ScoreCharacter(x))
+            return misplacedItems.Select(x => ScoreItem(x))
                                  .Aggregate((acc, x) => acc + x);
         }
 
-        public static int ScoreCharacter(char c)
+        public static int ScoreItem(char c)
         { // assumes c is A-Z or a-z, does not check for badly formed input
             if (c > 96)
             {
@@ -86,8 +75,8 @@ namespace AdventOfCode.Day3
             var rucksacks = input.Select(x => new Rucksack(x));
 
             // part one solution: find the items common to left/right side of each rucksack
-            var totalPriority = rucksacks.Select(x => x.FindCommonItemInCompartements())
-                                         .Select(items => Scoring.ScorePriority(items))
+            var totalPriority = rucksacks.Select(x => x.FindCommonItems())
+                                         .Select(items => Scoring.ScoreMultipleItems(items))
                                          .Aggregate((acc, x) => acc + x);
 
             Console.WriteLine("answer: " + totalPriority.ToString());
@@ -101,12 +90,12 @@ namespace AdventOfCode.Day3
 
             //each row is a rucksack, every 3 rucksacks is a group of elfs
             var rucksacks = input.Select(x => new Rucksack(x));
-            var elfGroups = rucksacks.Partition(3).Select(x => new ElfGroup(x));
+            var elfGroups = rucksacks.Chunk(3).Select(x => new ElfGroup(x));
 
 
             // part two solution: find which item each group of elfs has in common between its 3 rucksacks
             var totalPriority = elfGroups.Select(x => x.FindCommonItem())
-                                         .Select(item => Scoring.ScoreCharacter(item))
+                                         .Select(item => Scoring.ScoreItem(item))
                                          .Aggregate((acc, x) => acc + x);
 
             Console.WriteLine("answer: " + totalPriority.ToString());
